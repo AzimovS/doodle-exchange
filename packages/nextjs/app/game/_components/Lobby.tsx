@@ -2,9 +2,11 @@ import React, { useEffect, useState } from "react";
 import QRCode from "qrcode.react";
 import CopyToClipboard from "react-copy-to-clipboard";
 import { CheckCircleIcon, DocumentDuplicateIcon } from "@heroicons/react/24/outline";
+import UserCard from "~~/app/_components/UserCard";
+// import { Address } from "~~/components/scaffold-eth";
 import { Game } from "~~/types/game/game";
 
-const Lobby = ({ game }: { game: Game }) => {
+const Lobby = ({ game, connectedAddress }: { game: Game; connectedAddress: string }) => {
   const [inviteUrl, setInviteUrl] = useState("");
   const [inviteUrlCopied, setInviteUrlCopied] = useState(false);
   const [inviteCopied, setInviteCopied] = useState(false);
@@ -76,7 +78,17 @@ const Lobby = ({ game }: { game: Game }) => {
       <h1 className="flex justify-center text-2xl">Waiting host to start</h1>
 
       {game.players.map(player => {
-        return <h1 key={player.address}>{player.address}</h1>;
+        return (
+          <h1 key={player.address} className="flex flex-col">
+            <span className="flex">
+              <UserCard
+                address={player?.address}
+                username={player?.userName}
+                className={`${player?.address === connectedAddress ? "bg-primary" : "bg-secondary"} rounded-full btn-sm flex items-center pl-0 my-0 pr-2 shadow-md gap-0`}
+              />
+            </span>
+          </h1>
+        );
       })}
     </div>
   );

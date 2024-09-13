@@ -8,7 +8,6 @@ export const PATCH = async (request: Request) => {
   try {
     const body = await request.json();
     const { id, newStatus, address, drawing } = body;
-
     await connectdb();
 
     const game = await Game.findById(id);
@@ -41,7 +40,7 @@ export const PATCH = async (request: Request) => {
       player.rounds.push(roundEntry);
     }
 
-    if (newStatus === "classifying") {
+    if (drawing) {
       player.rounds[player.currentRound].drawings.push(drawing);
     }
 
@@ -51,8 +50,8 @@ export const PATCH = async (request: Request) => {
 
     const gameChannel = ablyRealtime.channels.get("gameUpdate");
     const playerChannel = ablyRealtime.channels.get("playerUpdate");
-    gameChannel.publish("gameUpdate", updatedGame);
-    playerChannel.publish("playerUpdate", player);
+    await gameChannel.publish("gameUpdate", updatedGame);
+    await playerChannel.publish("playerUpdate", player);
 
     return new NextResponse(
       JSON.stringify({

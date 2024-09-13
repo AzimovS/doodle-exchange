@@ -1,9 +1,48 @@
 import React from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
+import DrawingsList from "./DrawingsList";
+import { loogieBlo } from "loogie-blo";
+// import { Address } from "~~/components/scaffold-eth";
 import { Game } from "~~/types/game/game";
 
-const Results = ({ game }: { game: Game }) => {
+// const getFinalResults = (game: Game) => {
+//   const playersScore = new Map();
+//   game?.players.forEach(player => {
+//     playersScore.set(player?.address, 0);
+//   });
+//   game?.winners.forEach(winners => {
+//     winners.forEach((winner, index) => {
+//       if (playersScore.has(winner)) {
+//         const newScore = index == 0 ? 3 : 1;
+//         playersScore.set(winner, playersScore.get(winner) + newScore);
+//       } else {
+//         playersScore.set(winner, index == 0 ? 3 : 1);
+//       }
+//     });
+//   });
+//   return playersScore;
+// };
+
+function getPlayersResults(game: Game): { address: string; userName: string; totalPoints: number }[] {
+  return game.players
+    .map(player => {
+      const totalPoints = player.rounds.reduce((sum, round) => sum + round.points, 0);
+      return {
+        address: player.address,
+        userName: player.userName,
+        totalPoints,
+      };
+    })
+    .sort((a, b) => b.totalPoints - a.totalPoints);
+}
+const Results = ({ game, connectedAddress }: { game: Game; connectedAddress: string }) => {
   const router = useRouter();
+
+  // const playersScore = getFinalResults(game);
+  const playerResults = getPlayersResults(game);
+
+  console.log(playerResults);
 
   return (
     <div className="p-6">
@@ -19,31 +58,37 @@ const Results = ({ game }: { game: Game }) => {
           </button>
         </div>
         <h1 className="mx-auto text-2xl">Results</h1>
-        {/* 
-        {game.winners &&
-          game.winners.map((winner, index) => {
-            return (
-              <h1 key={`${winner}_${index}`} className="mx-auto">
-                The Round {index + 1} winner is {winner}
-              </h1>
-            );
-          })} */}
+        <div className="flex flex-col mx-auto">
+          <table className="table max-w-xs table-zebra shadow-lg">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Player</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              {playerResults.map((player: any, index) => (
+                <tr key={player.address} className={player.address === connectedAddress ? "bg-base-300" : ""}>
+                  <td>{index + 1}</td>
+                  <td className="flex w-fit">
+                    <Image
+                      alt={player.address + " loogie"}
+                      src={loogieBlo(player.address as `0x${string}`)}
+                      width={20}
+                      height={20}
+                      className="rounded-full"
+                    />
+                    {player.userName}
+                  </td>
+                  <td>{player.totalPoints}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-        {game.winners.map((winners, index) => {
-          return (
-            <div key={index} className="flex flex-col h-36 overflow-y-scroll mx-auto">
-              <h1>{`Round ${index + 1} Winners`}</h1>
-              <ul>
-                {winners.map((winner, index) => (
-                  <li key={winner} className="flex gap-6 justify-between">
-                    <span>{winner}</span>
-                    <span>{index == 0 ? "3" : "1"}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          );
-        })}
+        <DrawingsList game={game} />
       </div>
     </div>
   );

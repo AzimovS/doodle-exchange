@@ -47,12 +47,17 @@ export const PATCH = async (request: Request) => {
       player.rounds.push(roundEntry);
     }
 
-    player.rounds[player.currentRound].points = won ? (isCurrentRound ? 3 : 1) : 0;
-    player.rounds[player.currentRound].won = won;
+    player.rounds[currentPlayerRound].points = won ? (!game?.winners[currentPlayerRound] ? 3 : 1) : 0;
+    player.rounds[currentPlayerRound].won = won;
+
+    if (!game.winners[currentPlayerRound]) {
+      game.winners[currentPlayerRound] = [];
+    }
+    game.winners[currentPlayerRound].push(address);
 
     if (isFinalRound || isCurrentRound) {
       const roundChannel = ablyRealtime.channels.get("updateRound");
-      roundChannel.publish("updateRound", game);
+      await roundChannel.publish("updateRound", game);
     }
 
     if (isFinalRound) {
@@ -62,17 +67,12 @@ export const PATCH = async (request: Request) => {
       player.status = "waiting";
     }
 
-    if (!game.winners[currentPlayerRound]) {
-      game.winners[currentPlayerRound] = [];
-    }
-    game.winners[currentPlayerRound].push(address);
-
     const updatedGame = await game.save();
 
     const gameChannel = ablyRealtime.channels.get("gameUpdate");
     const playerChannel = ablyRealtime.channels.get("playerUpdate");
-    gameChannel.publish("gameUpdate", updatedGame);
-    playerChannel.publish("playerUpdate", player);
+    await gameChannel.publish("gameUpdate", updatedGame);
+    await playerChannel.publish("playerUpdate", player);
 
     return new NextResponse(
       JSON.stringify({
